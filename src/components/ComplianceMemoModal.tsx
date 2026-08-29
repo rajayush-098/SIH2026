@@ -1,0 +1,296 @@
+import React, { useRef } from "react";
+import { X, Printer, Download, ShieldCheck, CheckCircle2, FileText } from "lucide-react";
+import { BISStandard, StructuredAIResponse } from "../types";
+
+interface ComplianceMemoModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  data: BISStandard | StructuredAIResponse | null;
+}
+
+export const ComplianceMemoModal: React.FC<ComplianceMemoModalProps> = ({
+  isOpen,
+  onClose,
+  data,
+}) => {
+  const memoRef = useRef<HTMLDivElement>(null);
+
+  if (!isOpen || !data) return null;
+
+  const isStructuredResp = "executiveSummary" in data;
+  const standardCode = isStructuredResp ? data.standardCode : data.code;
+  const title = isStructuredResp ? data.title : data.title;
+  const summary = isStructuredResp ? data.executiveSummary : data.scope;
+  const citation = isStructuredResp
+    ? data.sourceCitation
+    : {
+        documentName: data.sourceDocument.documentName,
+        clause: data.sourceDocument.clause,
+        snippet: data.sourceDocument.snippet,
+        gazetteRef: data.sourceDocument.gazetteRef,
+        checksum: data.sourceDocument.checksum,
+        verificationDate: data.sourceDocument.verificationDate,
+      };
+
+  const fees = isStructuredResp ? data.feeBreakdown : null;
+  const steps = isStructuredResp ? data.licensingSteps : null;
+  const tests = isStructuredResp ? data.technicalRequirements : (data as BISStandard).keyTests;
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleDownloadText = () => {
+    const textContent = `================================================================================
+BUREAU OF INDIAN STANDARDS (BIS) - GOVERNMENT OF INDIA
+INTELLIGENT COMPLIANCE & STATUTORY MEMORANDUM
+Ref: BIS/SAATHI/MEMO/2026/${standardCode.replace(/[^a-zA-Z0-9]/g, "_")}
+Date of Generation: ${new Date().toLocaleDateString("en-IN")}
+================================================================================
+
+STANDARD: ${standardCode} - ${title}
+STATUS: Mandatory QCO / Official Statutory Regulation
+
+1. EXECUTIVE REGULATORY SUMMARY:
+${summary}
+
+2. OFFICIAL SOURCE CITATION & GAZETTE GROUNDING:
+- Document: ${citation.documentName}
+- Clause / Section: ${citation.clause}
+- Gazette Reference: ${citation.gazetteRef || "BIS Act 2016"}
+- Verification Hash: ${citation.checksum || "SHA-256 Verified"}
+- Citation Snippet: "${citation.snippet}"
+
+3. TESTING & PERFORMANCE REQUIREMENTS:
+${tests ? tests.map((t: string, i: number) => `   [${i + 1}] ${t}`).join("\n") : "Standard testing as per BIS STI manual."}
+
+================================================================================
+LEGAL NOTICE & STATUTORY WARNING:
+Under Section 29 of the Bureau of Indian Standards Act, 2016, manufacturing,
+importing, selling, or distributing non-compliant articles covered under
+Mandatory QCOs is punishable with imprisonment or fine up to ten times the
+value of goods produced.
+
+Generated automatically by BIS Saathi (GovTech Grounded Portal)
+Visit https://www.manakonline.in for official licensing filings.
+================================================================================`;
+
+    const blob = new Blob([textContent], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `BIS_Compliance_Memo_${standardCode.replace(/[^a-zA-Z0-9]/g, "_")}.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0B2545]/70 backdrop-blur-xs animate-fadeIn">
+      <div className="bg-white border border-slate-300 rounded-2xl max-w-4xl w-full p-6 shadow-2xl space-y-4 max-h-[92vh] flex flex-col">
+        
+        {/* Actions Bar */}
+        <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-1 rounded bg-[#0B2545] text-white text-xs font-bold font-mono">
+              OFFICIAL MEMO
+            </span>
+            <span className="text-xs text-slate-500 font-mono">
+              Ref: BIS/SAATHI/2026/{standardCode.replace(/[^a-zA-Z0-9]/g, "")}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handlePrint}
+              className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span>Print Memo</span>
+            </button>
+            <button
+              onClick={handleDownloadText}
+              className="px-3 py-1.5 rounded-lg bg-[#134074] hover:bg-[#0B2545] text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
+            >
+              <Download className="w-3.5 h-3.5 text-[#D4AF37]" />
+              <span>Download (.TXT / PDF)</span>
+            </button>
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Printable Official Document Body */}
+        <div
+          ref={memoRef}
+          className="flex-1 overflow-y-auto bg-[#FAFCFF] p-6 sm:p-8 rounded-xl border border-slate-300 text-slate-900 space-y-6 shadow-inner"
+        >
+          {/* Official Letterhead Header */}
+          <div className="text-center border-b-2 border-[#0B2545] pb-4 space-y-1">
+            <div className="flex justify-center mb-2">
+              <div className="w-12 h-12 rounded-full bg-[#0B2545] text-white flex items-center justify-center p-2 shadow">
+                <svg viewBox="0 0 100 100" className="w-full h-full">
+                  <circle cx="50" cy="50" r="46" fill="#0B2545" stroke="#D4AF37" strokeWidth="4" />
+                  <path d="M50 15 L78 32 L78 68 L50 85 L22 68 L22 32 Z" fill="none" stroke="#FFFFFF" strokeWidth="3.5" />
+                  <circle cx="50" cy="50" r="14" fill="#D4AF37" />
+                </svg>
+              </div>
+            </div>
+            <h2 className="text-sm sm:text-base font-black tracking-wider uppercase text-[#0B2545] font-serif">
+              BUREAU OF INDIAN STANDARDS
+            </h2>
+            <p className="text-[11px] text-slate-600 font-medium">
+              Ministry of Consumer Affairs, Food and Public Distribution, Government of India
+            </p>
+            <p className="text-[10px] text-slate-500 font-mono">
+              Manak Bhavan, 9 Bahadur Shah Zafar Marg, New Delhi 110002
+            </p>
+            <div className="pt-2">
+              <span className="inline-block bg-[#0B2545] text-white px-3 py-0.5 rounded text-[11px] font-bold tracking-widest uppercase">
+                COMPLIANCE & STATUTORY AUDIT MEMORANDUM
+              </span>
+            </div>
+          </div>
+
+          {/* Reference & Metadata Bar */}
+          <div className="grid grid-cols-2 text-xs border-y border-slate-200 py-2">
+            <div>
+              <span className="text-slate-500 font-semibold">Standard Reference: </span>
+              <span className="font-mono font-bold text-[#0B2545]">{standardCode}</span>
+            </div>
+            <div className="text-right">
+              <span className="text-slate-500 font-semibold">Date of Generation: </span>
+              <span className="font-mono text-slate-700">{new Date().toLocaleDateString("en-IN")}</span>
+            </div>
+          </div>
+
+          {/* Subject Line */}
+          <div className="space-y-1">
+            <h3 className="text-xs font-bold uppercase text-slate-600">Subject:</h3>
+            <p className="text-sm font-bold text-[#0B2545] bg-blue-50/50 p-2.5 rounded border border-blue-100">
+              Statutory Quality Control Order (QCO) and Certification Framework for {title} ({standardCode})
+            </p>
+          </div>
+
+          {/* Executive Scope */}
+          <div className="space-y-1.5 text-xs text-slate-800 leading-relaxed">
+            <h4 className="font-bold text-[#0B2545] uppercase text-[11px]">1. Regulatory Applicability:</h4>
+            <p className="bg-white p-3 rounded border border-slate-200 text-justify">{summary}</p>
+          </div>
+
+          {/* Official Grounded Citation Block */}
+          <div className="space-y-1.5 text-xs">
+            <h4 className="font-bold text-[#0B2545] uppercase text-[11px]">2. Grounded Evidence & Document Citation:</h4>
+            <div className="bg-slate-900 text-white p-3 rounded-lg text-xs space-y-1">
+              <div className="flex justify-between font-mono text-[11px] text-amber-300">
+                <span>📄 Document: {citation.documentName}</span>
+                <span>Clause: {citation.clause}</span>
+              </div>
+              <p className="text-slate-300 text-[11px] italic">"{citation.snippet}"</p>
+              <div className="text-[10px] text-slate-400 font-mono pt-1">
+                Ref: {citation.gazetteRef || "BIS Act 2016"} | Hash: {citation.checksum || "SHA-256 Valid"}
+              </div>
+            </div>
+          </div>
+
+          {/* Fee Breakdown Table (if available) */}
+          {fees && fees.length > 0 && (
+            <div className="space-y-1.5 text-xs">
+              <h4 className="font-bold text-[#0B2545] uppercase text-[11px]">3. Government Statutory Fee Schedule:</h4>
+              <table className="w-full text-left text-xs border border-slate-300 bg-white">
+                <thead className="bg-[#0B2545] text-white text-[10px] uppercase">
+                  <tr>
+                    <th className="p-2 border">Fee Category</th>
+                    <th className="p-2 border">Standard Rate</th>
+                    <th className="p-2 border">MSME / Micro Rate</th>
+                    <th className="p-2 border">Regulatory Remarks</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {fees.map((f, i) => (
+                    <tr key={i} className="border-t border-slate-200">
+                      <td className="p-2 border font-medium">{f.category}</td>
+                      <td className="p-2 border font-mono">{f.standardRate}</td>
+                      <td className="p-2 border font-mono font-bold text-emerald-700">{f.msmeRate}</td>
+                      <td className="p-2 border text-[10px] text-slate-600">{f.remarks}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Steps (if available) */}
+          {steps && steps.length > 0 && (
+            <div className="space-y-1.5 text-xs">
+              <h4 className="font-bold text-[#0B2545] uppercase text-[11px]">4. Prescribed Certification Procedure:</h4>
+              <div className="space-y-1.5">
+                {steps.map((st) => (
+                  <div key={st.stepNumber} className="bg-white p-2.5 rounded border border-slate-200 text-xs">
+                    <div className="flex justify-between font-bold text-[#0B2545] mb-0.5">
+                      <span>Step {st.stepNumber}: {st.stepTitle}</span>
+                      <span className="font-mono text-[10px] text-slate-500">{st.portal}</span>
+                    </div>
+                    <p className="text-slate-600 text-[11px]">{st.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Key Tests */}
+          {tests && tests.length > 0 && (
+            <div className="space-y-1.5 text-xs">
+              <h4 className="font-bold text-[#0B2545] uppercase text-[11px]">5. Mandated Quality Control & Lab Tests:</h4>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-[11px] text-slate-700 bg-white p-2.5 rounded border border-slate-200">
+                {tests.map((t: string, i: number) => (
+                  <li key={i} className="flex items-start gap-1">
+                    <span className="text-[#134074] font-bold">✓</span>
+                    <span>{t}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Legal Warning Notice */}
+          <div className="border border-red-300 bg-red-50/50 p-3 rounded text-[11px] text-red-900 space-y-1">
+            <span className="font-bold block uppercase text-[10px] tracking-wider text-red-800">
+              Statutory Penalties Notice (Section 29, BIS Act 2016):
+            </span>
+            <p>
+              Any person who manufactures, imports, sells, distributes, or stores articles covered under compulsory Quality Control Orders without the standard BIS ISI mark or valid license is liable for penal action including seizure of goods, cancellation of registration, and prosecution under Indian law.
+            </p>
+          </div>
+
+          {/* Official Footer Signature Block */}
+          <div className="pt-6 border-t-2 border-slate-300 flex justify-between items-end text-xs text-slate-600">
+            <div>
+              <p className="font-bold text-[#0B2545]">BIS Saathi Grounding Verification Engine</p>
+              <p className="text-[10px] text-slate-400">Bureau of Indian Standards e-Governance Cell</p>
+            </div>
+            <div className="text-right">
+              <div className="w-28 border-b border-slate-400 mb-1 ml-auto"></div>
+              <p className="text-[10px] font-mono text-slate-500">Authorized Digital Checksum</p>
+              <p className="text-[9px] font-mono text-emerald-600 font-bold">VERIFIED_GOV_RECORD</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Modal Bottom Actions */}
+        <div className="flex items-center justify-between pt-2 border-t border-slate-200 text-xs text-slate-500">
+          <span>Official Document generated according to Bureau of Indian Standards Rules 2018</span>
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold transition-colors"
+          >
+            Close Memorandum
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};

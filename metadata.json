@@ -1,0 +1,7 @@
+{
+  "name": "BIS Saathi",
+  "description": "Bureau of Indian Standards (BIS) Intelligent Compliance & Hallmarking Portal. AI-powered standards verification, QCO tracking, fee calculation, and automated compliance memos.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
