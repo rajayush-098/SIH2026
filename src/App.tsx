@@ -1,15 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Header } from "./components/Header";
 import { CommandSidebar } from "./components/CommandSidebar";
 import { ConversationalCanvas } from "./components/ConversationalCanvas";
-import { ComplianceInspector } from "./components/ComplianceInspector";
+import { SourceDocumentDrawer } from "./components/SourceDocumentDrawer";
 import { StandardsIndexModal } from "./components/StandardsIndexModal";
 import { FeeEstimatorModal } from "./components/FeeEstimatorModal";
 import { LabLocatorModal } from "./components/LabLocatorModal";
 import { AuditWizardModal } from "./components/AuditWizardModal";
 import { ComplianceMemoModal } from "./components/ComplianceMemoModal";
 import { STANDARDS_DATABASE } from "./data/standardsDatabase";
-import { BISStandard, ChatMessage, StructuredAIResponse, UserPersona } from "./types";
+import { BISStandard, ChatMessage, SourceCitation, StructuredAIResponse, UserPersona } from "./types";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 
 export function App() {
@@ -17,6 +17,18 @@ export function App() {
   const [activeStandard, setActiveStandard] = useState<BISStandard | null>(() => {
     return STANDARDS_DATABASE.find((s) => s.code === "IS 4151:2015") || STANDARDS_DATABASE[0];
   });
+  const [activeCitation, setActiveCitation] = useState<SourceCitation | null>(null);
+
+  // Sidebar collapsible state (collapses by default on small screens)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+    if (typeof window !== "undefined") {
+      return window.innerWidth >= 1024;
+    }
+    return true;
+  });
+
+  // Source Document slide-out drawer state
+  const [isSourceDrawerOpen, setIsSourceDrawerOpen] = useState(false);
 
   // Modals state
   const [isStandardsIndexOpen, setIsStandardsIndexOpen] = useState(false);
@@ -26,7 +38,7 @@ export function App() {
   const [isMemoModalOpen, setIsMemoModalOpen] = useState(false);
   const [memoData, setMemoData] = useState<BISStandard | StructuredAIResponse | null>(null);
 
-  // Active Tool state
+  // Active Tool & Toast state
   const [activeTool, setActiveTool] = useState<string>("chat");
   const [toastMessage, setToastMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
@@ -159,7 +171,7 @@ export function App() {
 
         setMessages((prev) => [...prev, aiMsg]);
 
-        // If the query returned a known standard or dynamic citation, sync the Right Inspector
+        // Sync active standard and source citation for drawer
         if (aiResp.standardCode && aiResp.standardCode !== "BIS-REF-ONLINE") {
           const matched = STANDARDS_DATABASE.find(
             (s) =>
@@ -200,6 +212,9 @@ export function App() {
             setActiveStandard(dynamicStd);
           }
         }
+        if (aiResp.sourceCitation) {
+          setActiveCitation(aiResp.sourceCitation);
+        }
       } else {
         const fallbackMsg: ChatMessage = {
           id: `ai-${Date.now()}`,
@@ -233,8 +248,27 @@ export function App() {
     );
     if (found) {
       setActiveStandard(found);
-      showToast(`Active Inspector switched to ${found.code}`);
+      setActiveCitation(found.sourceDocument);
+      setIsSourceDrawerOpen(true);
+      showToast(`Inspecting ${found.code}`);
     }
+  };
+
+  const handleOpenSourceDocumentDrawer = (response: StructuredAIResponse) => {
+    if (response.sourceCitation) {
+      setActiveCitation(response.sourceCitation);
+    }
+    if (response.standardCode && response.standardCode !== "BIS-REF-ONLINE") {
+      const found = STANDARDS_DATABASE.find(
+        (s) =>
+          s.code.toLowerCase().includes(response.standardCode.toLowerCase()) ||
+          response.standardCode.toLowerCase().includes(s.code.toLowerCase().replace(/[^a-zA-Z0-9]/g, ""))
+      );
+      if (found) {
+        setActiveStandard(found);
+      }
+    }
+    setIsSourceDrawerOpen(true);
   };
 
   const handleExportMemoFromResponse = (response: StructuredAIResponse) => {
@@ -259,7 +293,7 @@ export function App() {
     <div className="min-h-screen bg-[#F4F6F9] text-slate-900 flex flex-col font-sans antialiased selection:bg-[#134074] selection:text-white">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-5 right-5 z-50 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0B2545] border border-[#134074] text-xs font-semibold text-white shadow-2xl animate-bounce">
+        <div className="fixed bottom-5 right-5 z-50 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0B2545] border border-[#134074] text-xs font-semibold text-white shadow-xl animate-bounce">
           {toastMessage.type === "success" ? (
             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           ) : (
@@ -269,52 +303,61 @@ export function App() {
         </div>
       )}
 
-      {/* Top GovTech Header */}
+      {/* Top GovTech Header with Sidebar Toggle */}
       <Header
         persona={persona}
+        isSidebarOpen={isSidebarOpen}
+        onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
         onOpenAuditWizard={() => setIsAuditWizardOpen(true)}
         onOpenFeeEstimator={() => setIsFeeEstimatorOpen(true)}
         onOpenStandardsIndex={() => setIsStandardsIndexOpen(true)}
       />
 
-      {/* Main 3-Zone Architecture Layout */}
-      <main className="flex-1 w-full max-w-[1700px] mx-auto px-3 sm:px-5 lg:px-6 py-4 flex flex-col lg:flex-row gap-4 items-start">
-        {/* Zone 1: Left Command Sidebar (20-22%) */}
-        <CommandSidebar
-          persona={persona}
-          onPersonaChange={(p) => {
-            setPersona(p);
-            showToast(`Switched persona to ${p.toUpperCase()}`);
-          }}
-          activeTool={activeTool}
-          onSelectTool={handleSelectTool}
-          onTriggerPresetQuery={(q) => handleSendMessage(q)}
-        />
+      {/* Clean 2-Column Main Workspace */}
+      <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 flex gap-5 items-start relative">
+        
+        {/* Left Collapsible Sidebar (Overlay on mobile, column on desktop) */}
+        {isSidebarOpen && (
+          <>
+            {/* Mobile Backdrop */}
+            <div
+              onClick={() => setIsSidebarOpen(false)}
+              className="fixed inset-0 bg-slate-900/30 z-30 lg:hidden backdrop-blur-xs"
+            />
 
-        {/* Zone 2: Center Conversational Canvas (50%) */}
-        <ConversationalCanvas
-          messages={messages}
-          isLoading={isLoading}
-          onSendMessage={handleSendMessage}
-          onSelectActiveStandardCode={handleSelectActiveStandardCode}
-          onExportMemoFromResponse={handleExportMemoFromResponse}
-          persona={persona}
-        />
+            {/* Sidebar Element */}
+            <div className="fixed inset-y-0 left-0 z-40 w-72 sm:w-80 bg-white p-4 shadow-2xl lg:static lg:z-0 lg:w-72 lg:p-0 lg:shadow-none shrink-0 transition-all">
+              <CommandSidebar
+                persona={persona}
+                onPersonaChange={(p) => {
+                  setPersona(p);
+                  showToast(`Switched persona to ${p.toUpperCase()}`);
+                }}
+                activeTool={activeTool}
+                onSelectTool={handleSelectTool}
+                onTriggerPresetQuery={(q) => handleSendMessage(q)}
+                onCloseMobile={() => setIsSidebarOpen(false)}
+              />
+            </div>
+          </>
+        )}
 
-        {/* Zone 3: Right Evidence & Compliance Inspector (28-30%) */}
-        <ComplianceInspector
-          activeStandard={activeStandard}
-          onExportMemo={handleExportMemoFromStandard}
-          onSelectStandard={(std) => {
-            setActiveStandard(std);
-            showToast(`Selected ${std.code} in Inspector`);
-          }}
-          allStandards={STANDARDS_DATABASE}
-        />
+        {/* Main Center Conversational Canvas (takes full width & center stage) */}
+        <div className="flex-1 w-full min-w-0">
+          <ConversationalCanvas
+            messages={messages}
+            isLoading={isLoading}
+            onSendMessage={handleSendMessage}
+            onSelectActiveStandardCode={handleSelectActiveStandardCode}
+            onExportMemoFromResponse={handleExportMemoFromResponse}
+            onOpenSourceDocumentDrawer={handleOpenSourceDocumentDrawer}
+            persona={persona}
+          />
+        </div>
       </main>
 
       {/* Bottom Official Disclaimer Footer */}
-      <footer className="border-t border-slate-200 bg-white py-3 text-center text-xs text-slate-500 shadow-xs">
+      <footer className="border-t border-slate-200 bg-white py-3 text-center text-xs text-slate-500 shadow-xs mt-auto">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px]">
           <span className="font-medium text-slate-600">
             Responses are generated from official BIS Product Manuals and Gazettes.
@@ -327,6 +370,15 @@ export function App() {
         </div>
       </footer>
 
+      {/* Slide-out Source Document Drawer (Progressive Disclosure) */}
+      <SourceDocumentDrawer
+        isOpen={isSourceDrawerOpen}
+        onClose={() => setIsSourceDrawerOpen(false)}
+        activeStandard={activeStandard}
+        activeCitation={activeCitation}
+        onExportMemo={handleExportMemoFromStandard}
+      />
+
       {/* Modals & Dialogs */}
       <StandardsIndexModal
         isOpen={isStandardsIndexOpen}
@@ -334,6 +386,8 @@ export function App() {
         standards={STANDARDS_DATABASE}
         onSelectStandard={(std) => {
           setActiveStandard(std);
+          setActiveCitation(std.sourceDocument);
+          setIsSourceDrawerOpen(true);
           showToast(`Inspecting ${std.code}`);
         }}
         onAskAboutStandard={(query) => handleSendMessage(query)}

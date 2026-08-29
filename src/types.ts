@@ -13,7 +13,8 @@ export type QCOStatus =
   | "Hallmarking Mandate" 
   | "CRS Scheme" 
   | "Draft QCO"
-  | "Clarification";
+  | "Clarification"
+  | "System Introduction";
 
 export interface SourceCitation {
   documentName: string;
@@ -67,7 +68,7 @@ export interface BISStandard {
 export interface StructuredAIResponse {
   title: string;
   standardCode: string;
-  statusBadge: "Mandatory QCO" | "Voluntary" | "Hallmarking Mandate" | "CRS Scheme" | "Clarification";
+  statusBadge: QCOStatus;
   executiveSummary: string;
   feeBreakdown?: FeeBreakdownItem[];
   licensingSteps?: LicensingStepItem[];
