@@ -51,7 +51,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-1.5 font-sans">
                   <span>BIS Saathi</span>
                   <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded bg-[#D4AF37] text-[#0B2545] tracking-wider">
-                    GovTech AI
+                    GovTech Standards
                   </span>
                 </h1>
               </div>
@@ -72,7 +72,7 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Gazette Order Status Ticker */}
             <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white/5 border border-white/10 text-xs text-slate-300">
               <ShieldCheck className="w-4 h-4 text-[#D4AF37]" />
-              <span>BIS Act 2016 & QCO Regulations Grounded</span>
+              <span>BIS Act 2016 & QCO Regulations Active</span>
             </div>
 
             {/* Quick Links */}

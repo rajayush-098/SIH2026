@@ -101,7 +101,7 @@ export const CommandSidebar: React.FC<CommandSidebarProps> = ({
             <FileSearch className={`w-4 h-4 ${activeTool === "standards-index" ? "text-white" : "text-[#134074]"}`} />
             <span>Standard (IS) Index</span>
           </div>
-          <span className="text-[10px] text-slate-400 font-mono">10+ Grounded</span>
+          <span className="text-[10px] text-slate-400 font-mono">Official Index</span>
         </button>
 
         <button

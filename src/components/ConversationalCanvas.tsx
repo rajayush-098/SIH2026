@@ -132,15 +132,14 @@ export const ConversationalCanvas: React.FC<ConversationalCanvasProps> = ({
       {/* Canvas Top Bar */}
       <div className="bg-[#0B2545] px-4 py-2.5 flex items-center justify-between border-b border-[#134074] text-white">
         <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 rounded-full bg-emerald-400"></div>
           <span className="text-xs font-semibold uppercase tracking-wider text-slate-200 font-sans">
-            AI Compliance Grounding Stream
+            Compliance Stream
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[11px] text-slate-300 hidden sm:inline">Strict RAG Grounded</span>
-          <span className="text-[10px] font-mono bg-[#134074] px-2 py-0.5 rounded text-amber-300 border border-white/10">
-            Zero Hallucination Mode
+          <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+          <span className="text-xs text-slate-300 font-medium">
+            Database: Gazette & Product Manuals v2.4 (Active)
           </span>
         </div>
       </div>
@@ -364,7 +363,7 @@ export const ConversationalCanvas: React.FC<ConversationalCanvasProps> = ({
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5 text-[#D4AF37] font-bold text-[11px] uppercase tracking-wider">
                         <FileText className="w-3.5 h-3.5" />
-                        <span>Official Grounded Document Source</span>
+                        <span>Official Document Source Citation</span>
                       </div>
                       <button
                         onClick={() =>
@@ -426,7 +425,7 @@ export const ConversationalCanvas: React.FC<ConversationalCanvasProps> = ({
               <div className="flex items-center gap-3">
                 <RefreshCw className="w-4 h-4 text-[#134074] animate-spin" />
                 <span className="text-xs font-semibold text-[#134074]">
-                  BIS Saathi is retrieving verified Product Manuals & Gazettes via File Search...
+                  Retrieving verified Product Manuals & Gazette references...
                 </span>
               </div>
               <div className="h-4 bg-slate-100 rounded w-3/4"></div>

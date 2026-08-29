@@ -81,11 +81,11 @@ export const ComplianceInspector: React.FC<ComplianceInspectorProps> = ({
         <div className="flex items-center gap-2">
           <ShieldCheck className="w-4 h-4 text-[#134074]" />
           <h2 className="text-xs font-bold uppercase tracking-wider text-[#0B2545]">
-            Evidence & RAG Inspector
+            Evidence & Standards Inspector
           </h2>
         </div>
         <span className="text-[10px] font-mono bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded font-bold border border-emerald-200">
-          Grounded Verified
+          Gazette Verified
         </span>
       </div>
 

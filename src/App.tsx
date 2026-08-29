@@ -42,7 +42,7 @@ export function App() {
         standardCode: "IS 4151:2015",
         statusBadge: "Mandatory QCO",
         executiveSummary:
-          "Welcome to BIS Saathi. Under the Bureau of Indian Standards Act 2016 and departmental Quality Control Orders (QCOs), this portal provides strictly grounded compliance pathways, statutory fee calculations with 50% Udyam MSME concessions, testing scopes, and licensing workflows. All responses are verified against official BIS Product Manuals and Gazette notifications.",
+          "Welcome to BIS Saathi. Under the Bureau of Indian Standards Act 2016 and departmental Quality Control Orders (QCOs), this portal provides verified compliance pathways, statutory fee calculations with 50% Udyam MSME concessions, testing scopes, and licensing workflows. All guidance is cross-referenced against official BIS Product Manuals and Gazette notifications.",
         feeBreakdown: [
           {
             category: "Scheme-I Application Processing Fee",
